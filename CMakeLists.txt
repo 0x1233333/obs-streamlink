@@ -14,27 +14,28 @@ endif()
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 find_package(FFmpeg REQUIRED COMPONENTS avcodec avfilter avdevice avutil swscale avformat swresample)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# =========================================================
+# 2. 核心路径配置 (Fix Path Issues)
+# =========================================================
+# 定义 OBS 源码位置 (基于 build.yml 的 clone 位置)
+set(OBS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/obs-studio/libobs")
 
-# =========================================================
-# 2. 包含目录 (核心修复)
-# =========================================================
-# 这里我们显式指定所有可能的路径，确保万无一失
-set(OBS_INCLUDE_PATHS
-    "${CMAKE_SOURCE_DIR}/obs-studio/libobs"          # 对应 <obs.h>
-    "${CMAKE_SOURCE_DIR}/obs-studio/libobs/util"     # 对应 <circlebuf.h>
-    "/opt/homebrew/include"
+if(EXISTS "${OBS_SRC_DIR}")
+    message(STATUS "Found OBS Source at: ${OBS_SRC_DIR}")
+else()
+    message(WARNING "Could not find OBS source at ${OBS_SRC_DIR}. Please check git clone step.")
+endif()
+
+# 使用全局包含目录，确保所有源文件都能看到
+include_directories(
+    "${OBS_SRC_DIR}"          # 允许 <obs.h> 和 <util/circlebuf.h>
+    "${OBS_SRC_DIR}/.."       # 允许 <libobs/obs.h>
+    "/opt/homebrew/include"   # simde 和其他 brew 库
     "/usr/local/include"
     "${FFMPEG_INCLUDE_DIRS}"
     "${Python3_INCLUDE_DIRS}"
     "deps/"
 )
-
-# 如果通过命令行传了路径，也加进去
-if(DEFINED LIBOBS_INCLUDE_DIR)
-    list(APPEND OBS_INCLUDE_PATHS "${LIBOBS_INCLUDE_DIR}")
-    list(APPEND OBS_INCLUDE_PATHS "${LIBOBS_INCLUDE_DIR}/util")
-endif()
 
 # =========================================================
 # 3. 源文件与目标
@@ -52,9 +53,6 @@ if(WIN32)
 endif()
 
 add_library(obs-streamlink MODULE ${SOURCES})
-
-# 应用包含目录
-target_include_directories(obs-streamlink PRIVATE ${OBS_INCLUDE_PATHS})
 
 # =========================================================
 # 4. 链接配置
