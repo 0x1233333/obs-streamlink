@@ -5,10 +5,7 @@
 #define STREAMLINK_DEBUG
 #endif
 
-#undef _DEBUG  // NOLINT(clang-diagnostic-reserved-macro-identifier)
-//#ifdef STREAMLINK_DEBUG // requires debugging version of Python
-//#define Py_REF_DEBUG
-//#endif
+#undef _DEBUG
 #include <Python.h>
 
 #ifdef STREAMLINK_DEBUG
@@ -18,6 +15,8 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <stdexcept> // [新增] 必须包含此头文件
+
 namespace streamlink {
     extern bool loaded;
     extern bool loadingFailed;
@@ -59,25 +58,30 @@ namespace streamlink {
 
         PyObjectHolder& operator=(PyObjectHolder&& another) noexcept;
     };
+
     class not_loaded : public std::exception {};
-    class call_failure : public std::exception
+
+    // [修改] 从 std::exception 改为 std::runtime_error 以兼容 macOS/Linux
+    class call_failure : public std::runtime_error
     {
     public:
-
-        call_failure() = default;
+        // std::runtime_error 没有默认构造函数，必须提供消息
+        call_failure() : std::runtime_error("Unknown streamlink call failure") {}
 
         explicit call_failure(char const* message)
-            : std::exception(message)
+            : std::runtime_error(message)
         { }
 
+        // 忽略 int i，因为 runtime_error 不接受它，或者将其格式化进字符串
         call_failure(char const* message, int i)
-            : std::exception(message, i)
+            : std::runtime_error(message)
         { }
 
         explicit call_failure(std::exception const& other)
-            : std::exception(other)
+            : std::runtime_error(other.what())
         { }
     };
+
     class invalid_underlying_object : public std::exception {};
     class stream_ended : public std::exception {};
 
