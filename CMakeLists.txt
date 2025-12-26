@@ -4,9 +4,7 @@ project(obs-streamlink)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 
-# =========================================================
-# 1. 依赖查找
-# =========================================================
+# 1. 查找依赖
 if(NOT APPLE)
     find_package(libobs REQUIRED)
 endif()
@@ -14,32 +12,21 @@ endif()
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 find_package(FFmpeg REQUIRED COMPONENTS avcodec avfilter avdevice avutil swscale avformat swresample)
 
-# =========================================================
-# 2. 核心路径配置 (Fix Path Issues)
-# =========================================================
-# 定义 OBS 源码位置 (基于 build.yml 的 clone 位置)
-set(OBS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/obs-studio/libobs")
-
-if(EXISTS "${OBS_SRC_DIR}")
-    message(STATUS "Found OBS Source at: ${OBS_SRC_DIR}")
-else()
-    message(WARNING "Could not find OBS source at ${OBS_SRC_DIR}. Please check git clone step.")
+# 2. 接收并检查绝对路径
+if(NOT DEFINED LIBOBS_PATH)
+    # 如果本地编译没传参数，尝试自动推断
+    set(LIBOBS_PATH "${CMAKE_SOURCE_DIR}/obs-studio/libobs")
 endif()
 
-# 使用全局包含目录，确保所有源文件都能看到
-include_directories(
-    "${OBS_SRC_DIR}"          # 允许 <obs.h> 和 <util/circlebuf.h>
-    "${OBS_SRC_DIR}/.."       # 允许 <libobs/obs.h>
-    "/opt/homebrew/include"   # simde 和其他 brew 库
-    "/usr/local/include"
-    "${FFMPEG_INCLUDE_DIRS}"
-    "${Python3_INCLUDE_DIRS}"
-    "deps/"
-)
+message(STATUS "Build using OBS path: ${LIBOBS_PATH}")
 
-# =========================================================
-# 3. 源文件与目标
-# =========================================================
+if(NOT EXISTS "${LIBOBS_PATH}/util/circlebuf.h")
+    message(WARNING "Critical Header circlebuf.h NOT found in ${LIBOBS_PATH}/util/ ! Build will likely fail.")
+endif()
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# 3. 源文件
 set(SOURCES
     obs-streamlink.cpp
     streamlink-source.cpp
@@ -54,9 +41,18 @@ endif()
 
 add_library(obs-streamlink MODULE ${SOURCES})
 
-# =========================================================
-# 4. 链接配置
-# =========================================================
+# 4. 设置包含路径 (使用绝对路径)
+target_include_directories(obs-streamlink PRIVATE
+    "${LIBOBS_PATH}"          # 这里是 libobs 根目录，使得 <util/circlebuf.h> 生效
+    "${LIBOBS_PATH}/.."       # 这里是 obs-studio 根目录，使得 <libobs/obs.h> 生效
+    "/opt/homebrew/include"
+    "/usr/local/include"
+    "${FFMPEG_INCLUDE_DIRS}"
+    "${Python3_INCLUDE_DIRS}"
+    "deps/"
+)
+
+# 5. 链接库
 target_link_libraries(obs-streamlink PRIVATE ${FFMPEG_LIBRARIES})
 
 if(libobs_FOUND)
