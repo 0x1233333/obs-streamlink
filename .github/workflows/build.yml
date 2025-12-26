@@ -1,0 +1,57 @@
+name: Build OBS Plugin
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  # =========================================================
+  # macOS 编译任务 (开箱即用)
+  # =========================================================
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 1. 安装 OBS Studio (含开发头文件) 和 FFmpeg
+      - name: Install Dependencies
+        run: |
+          brew update
+          brew install obs-studio ffmpeg cmake
+          
+      # 2. 配置 CMake
+      # OBS 的 brew 安装路径通常会自动被 CMake 识别，无需额外指定
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_INSTALL_PREFIX=./install
+            
+      # 3. 编译插件
+      - name: Build
+        run: cmake --build build --config Release --parallel
+        
+      # 4. 整理文件 (将 .so 改名为 .plugin 结构，如果需要)
+      # 这里简单地将生成的文件打包
+      - name: Package
+        run: |
+          mkdir release
+          cp build/*.so release/ 2>/dev/null || cp build/**/*.so release/
+          
+      # 5. 上传编译产物到 GitHub Actions 页面
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-streamlink-macos
+          path: release/
+
+  # =========================================================
+  # Windows 编译任务 (仅作为占位符)
+  # =========================================================
+  # Windows 编译需要 OBS SDK (Headers + Libs)，官方 Release 包里没有。
+  # 如果你需要 Windows CI，强烈建议 Fork 官方模板：
+  # https://github.com/obsproject/obs-plugintemplate
