@@ -18,24 +18,29 @@ jobs:
           brew update
           brew install ffmpeg cmake simde
 
-      # 确保克隆完整的 obs-studio 源码
+      # 1. 下载源码并验证文件存在
       - name: Download OBS Headers
         run: |
           rm -rf obs-studio
           git clone --depth 1 https://github.com/obsproject/obs-studio.git
-          echo "Checking for circlebuf.h..."
-          ls -R obs-studio/libobs/util/circlebuf.h || echo "FILE NOT FOUND!"
+          echo "=== Debug: Checking file existence ==="
+          ls -l obs-studio/libobs/util/circlebuf.h || echo "FILE MISSING!"
+          echo "=== End Debug ==="
 
-      # 创建缺失的 config 文件
       - name: Create Dummy Config
         run: |
           echo "#define OBS_VERSION \"30.0.0\"" > obs-studio/libobs/obsconfig.h
 
+      # 2. 传递绝对路径给 CMake
       - name: Configure CMake
         run: |
+          # 获取绝对路径
+          OBS_PATH="${{ github.workspace }}/obs-studio/libobs"
+          
           cmake -B build -S . \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DLIBOBS_PATH="$OBS_PATH" \
             -DCMAKE_INSTALL_PREFIX=./install
             
       - name: Build
