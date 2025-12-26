@@ -2,11 +2,9 @@
 
 #include <filesystem>
 
-// [修改]：不要写死 "Python38"。
-// 为了兼容性，我们暂时将其改为空或者通用的 "python-embed"，
-// 但更好的策略是让 OBS 自己的脚本环境去处理，或者我们先改成 OBS 30 常见的 "python310"
-// 如果你想更智能，我们可以稍后写一段代码自动检测。
-// 目前先改为 OBS 30 Windows 版默认的嵌入式 Python 目录名：
-constexpr std::string_view obs_streamlink_python_ver { "python310" }; 
+// 修改为适配新版 OBS 的 Python 目录名
+// 如果你的 OBS 插件目录下 Python 文件夹名为 "python310" 或 "python311"，请在此处修改。
+// "embed" 是 OBS 官方推荐的嵌入式环境目录名。
+constexpr std::string_view obs_streamlink_python_ver { "embed" };
 
 extern std::filesystem::path obs_streamlink_data_path;
