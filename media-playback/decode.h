@@ -16,8 +16,14 @@
 
 #pragma once
 
+// [新增] 引入 OBS 基础头文件，防止类型未定义
+#include <obs.h>
+#include <obs-module.h>
+
+// [修改] 配合 CMakeLists.txt 的路径修复，直接引用文件名
+#include <circlebuf.h>
+
 extern "C" {
-#include <util/circlebuf.h>
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
@@ -83,5 +89,3 @@ extern bool mp_decode_next(struct mp_decode *decode);
 extern void mp_decode_flush(struct mp_decode *decode);
 
 }
-
-
