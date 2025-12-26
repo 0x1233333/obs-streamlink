@@ -16,12 +16,11 @@
 
 #pragma once
 
-// [新增] 引入 OBS 基础头文件，防止类型未定义
 #include <obs.h>
 #include <obs-module.h>
 
-// [修改] 配合 CMakeLists.txt 的路径修复，直接引用文件名
-#include <circlebuf.h>
+// [修改] 改回标准写法，这需要我们在 CMake 中正确配置 libobs 目录
+#include <util/circlebuf.h>
 
 extern "C" {
 #ifdef _MSC_VER
