@@ -4,7 +4,6 @@ project(obs-streamlink)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 
-# macOS 下完全跳过 libobs 查找
 if(NOT APPLE)
     find_package(libobs REQUIRED)
 endif()
@@ -28,7 +27,9 @@ endif()
 
 add_library(obs-streamlink MODULE ${SOURCES})
 
-# 包含目录
+# =========================================================
+# [关键修复] 包含目录
+# =========================================================
 target_include_directories(obs-streamlink PRIVATE
     "${FFMPEG_INCLUDE_DIRS}"
     "${Python3_INCLUDE_DIRS}"
@@ -37,12 +38,12 @@ target_include_directories(obs-streamlink PRIVATE
     "/usr/local/include"
 )
 
-# [增强] 针对手动源码编译的路径支持
+# [终极路径修复]
 if(DEFINED LIBOBS_INCLUDE_DIR)
     target_include_directories(obs-streamlink PRIVATE 
-        "${LIBOBS_INCLUDE_DIR}"
-        # 添加这行是为了解决 util/circlebuf.h 找不到的问题，如果源码结构有差异的话
-        "${LIBOBS_INCLUDE_DIR}/../" 
+        "${LIBOBS_INCLUDE_DIR}"           # 允许 <obs.h>
+        "${LIBOBS_INCLUDE_DIR}/.."        # 允许 <libobs/obs.h>
+        "${LIBOBS_INCLUDE_DIR}/util"      # [新增] 允许 "circlebuf.h" 直接引用
     )
 endif()
 
