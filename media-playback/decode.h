@@ -17,7 +17,7 @@
 #pragma once
 
 extern "C" {
-#include <util/circlebuf.h>
+#include "circlebuf.h"
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4244)
@@ -83,3 +83,4 @@ extern bool mp_decode_next(struct mp_decode *decode);
 extern void mp_decode_flush(struct mp_decode *decode);
 
 }
+
