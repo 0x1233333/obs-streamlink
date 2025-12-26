@@ -13,19 +13,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # 1. 安装基础构建工具 (关键修正：增加了 simde)
       - name: Install Dependencies
         run: |
           brew update
           brew install ffmpeg cmake simde
 
-      # 2. 克隆 OBS Studio 源码 (为了获取 .h 头文件)
       - name: Download OBS Headers
         run: |
           git clone --depth 1 https://github.com/obsproject/obs-studio.git
           
-      # 3. 配置 CMake
-      # 关键参数: -DLIBOBS_INCLUDE_DIR 指向刚才下载的源码
+      # [新增步骤] 创建缺失的 obsconfig.h 文件
+      - name: Create Dummy Config
+        run: |
+          echo "#define OBS_VERSION \"30.0.0\"" > obs-studio/libobs/obsconfig.h
+
       - name: Configure CMake
         run: |
           cmake -B build -S . \
@@ -34,17 +35,14 @@ jobs:
             -DLIBOBS_INCLUDE_DIR="${{ github.workspace }}/obs-studio/libobs" \
             -DCMAKE_INSTALL_PREFIX=./install
             
-      # 4. 编译插件
       - name: Build
         run: cmake --build build --config Release --parallel
         
-      # 5. 打包产物 (查找生成的 .so 文件并整理)
       - name: Package
         run: |
           mkdir release
           find build -name "*.so" -exec cp {} release/ \;
           
-      # 6. 上传结果
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
