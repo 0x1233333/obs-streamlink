@@ -1,7 +1,5 @@
 #pragma once
 
-#include <corecrt.h>
-
 #define PY_SSIZE_T_CLEAN
 #ifdef _DEBUG
 #define STREAMLINK_DEBUG
@@ -69,15 +67,15 @@ namespace streamlink {
         call_failure() = default;
 
         explicit call_failure(char const* message)
-            : exception(message)
+            : std::exception(message)
         { }
 
         call_failure(char const* message, int i)
-            : exception(message, i)
+            : std::exception(message, i)
         { }
 
-        explicit call_failure(exception const& other)
-            : exception(other)
+        explicit call_failure(std::exception const& other)
+            : std::exception(other)
         { }
     };
     class invalid_underlying_object : public std::exception {};
